@@ -10,11 +10,14 @@ export const Hero = () => {
         <div className="font-mono text-xs text-cyan-400 tracking-wider mb-4 flex justify-center items-center gap-2">
           <span className="w-6 h-px bg-cyan-400"></span> SYSTEMS ENGINEERING
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white to-cyan-300 bg-clip-text text-transparent">
-          Building systems that <br />
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
+          <span className="bg-gradient-to-r from-white to-cyan-300 bg-clip-text text-transparent">
+            building systems that
+          </span>
+          <br />
           <span className="text-cyan-400">work when everything else fails</span>
         </h1>
-        <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-8">
+        <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto mb-8">
           Offline-first architectures · Distributed systems · Real-time networking · Fault tolerance
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
