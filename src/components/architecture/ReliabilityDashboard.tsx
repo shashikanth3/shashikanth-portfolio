@@ -1,10 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { Activity, Database, Wifi, HardDrive, Clock, AlertTriangle, CheckCircle, Cpu, Zap } from 'lucide-react';
+import { Activity, Database, Wifi, HardDrive, Clock, AlertTriangle, Cpu, Zap } from 'lucide-react';
 
-interface MetricHistory {
-  timestamp: number;
-  value: number;
-}
 
 const MetricSparkline = ({ data, color, height = 40 }: { data: number[]; color: string; height?: number }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
