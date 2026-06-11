@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-500: #00d4ff;
+  --color-brand-600: #0099bb;
+  --color-surface: #0f1520;
+  --color-surface2: #151d2e;
+  --color-border: #1e2d45;
+  --color-teal: #00ffd0;
+  --color-amber: #f5a623;
+  --color-error: #ff4d4d;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: radial-gradient(circle at 20% 30%, #0f1520 0%, #0a0e17 100%);
+}
+
+body {
+  @apply bg-[#0a0e17] text-[#e2eaf8] antialiased;
+  font-family: var(--font-sans);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0e17;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2d45;
+  border-radius: 3px;
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Utility */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 px-6 py-3 bg-[#00d4ff] text-[#0a0e17] font-semibold rounded-lg transition-all hover:bg-[#33dcff] hover:-translate-y-0.5;
+}
+.btn-secondary {
+  @apply inline-flex items-center gap-2 px-6 py-3 border border-[#1e2d45] text-[#6b7fa3] rounded-lg transition-all hover:border-[#e2eaf8] hover:text-[#e2eaf8];
+}
