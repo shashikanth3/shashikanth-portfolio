@@ -7,23 +7,6 @@ const Shimmer: React.FC<{ className?: string }> = ({ className = '' }) => (
   />
 );
 
-// Pulsing node circle
-const NodeCircle: React.FC<{ size?: number; delay?: string; glow?: string }> = ({
-  size = 12,
-  delay = '0s',
-  glow = 'rgba(0,212,255,0.2)',
-}) => (
-  <div
-    className="rounded-full bg-slate-700/80 border border-slate-600/50 animate-pulse flex-shrink-0"
-    style={{
-      width: size,
-      height: size,
-      animationDelay: delay,
-      boxShadow: `0 0 12px ${glow}`,
-    }}
-  />
-);
-
 const HeroSkeleton: React.FC = () => {
   const nodes = [
     { x: 22, y: 40, size: 14, delay: '0s' },

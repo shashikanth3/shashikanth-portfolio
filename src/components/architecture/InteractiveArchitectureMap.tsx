@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smartphone, Database, RefreshCw, Cloud, ArrowRight, ShieldCheck, Cpu } from 'lucide-react';
+import { Smartphone, Database, RefreshCw, Cloud, ShieldCheck, Cpu } from 'lucide-react';
 
 // --- DATA LAYER ---
 const ARCHITECTURE_NODES = [
