@@ -103,7 +103,7 @@ const LoadBar = ({ value, health }: { value: number; health: NodeHealth }) => {
     recovering: 'bg-yellow-400',
   };
   return (
-    <div className="w-[60px] h-[3px] bg-white/5 rounded-full overflow-hidden">
+    <div className="w-[40px] sm:w-[60px] h-[3px] bg-white/5 rounded-full overflow-hidden">
       <div
         className={`h-full rounded-full transition-all duration-700 ${barColors[health]}`}
         style={{ width: `${Math.round(value * 100)}%` }}
@@ -120,7 +120,7 @@ const StatusLabel = ({ text, health }: { text: string; health: NodeHealth }) => 
     recovering: 'text-yellow-400',
   };
   return (
-    <span className={`text-[11px] font-bold tracking-wider font-mono ${textColors[health]}`}>
+    <span className={`text-[9px] sm:text-[11px] font-bold tracking-wider font-mono ${textColors[health]}`}>
       {text}
     </span>
   );
@@ -138,7 +138,7 @@ const TypeBadge = ({ type }: { type: ActivityEntry['type'] }) => {
     sync: 'SYNC', heartbeat: 'HB', integrity: 'INTEG', recovery: 'RECV', fail: 'FAIL',
   };
   return (
-    <span className={`text-[8px] px-[5px] py-[1px] rounded-[2px] font-bold tracking-wider font-mono flex-shrink-0 ${styles[type]}`}>
+    <span className={`text-[7px] sm:text-[8px] px-[4px] sm:px-[5px] py-[1px] rounded-[2px] font-bold tracking-wider font-mono flex-shrink-0 ${styles[type]}`}>
       {labels[type]}
     </span>
   );
@@ -150,7 +150,7 @@ const PacketDot = ({ type }: { type: ActivityEntry['type'] }) => {
   };
   return (
     <span
-      className="inline-block w-[4px] h-[4px] rounded-full flex-shrink-0"
+      className="inline-block w-[3px] sm:w-[4px] h-[3px] sm:h-[4px] rounded-full flex-shrink-0"
       style={{ background: colors[type] }}
     />
   );
@@ -328,7 +328,7 @@ export const Hero = () => {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#020c18]">
+    <section className="relative min-h-screen w-full overflow-x-hidden bg-[#020c18]">
       {/* Scanline texture */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -343,42 +343,42 @@ export const Hero = () => {
 
       {/* Command center overlay */}
       <div
-        className={`relative z-10 min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-0 transition-opacity duration-700 ${booted ? 'opacity-100' : 'opacity-0'}`}
+        className={`relative z-10 min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 transition-opacity duration-700 ${booted ? 'opacity-100' : 'opacity-0'}`}
       >
         {/* ── Left: Identity + Actions ─────────────────────────────────────── */}
-        <div className="flex flex-col justify-center px-8 sm:px-12 lg:px-16 py-16 gap-0">
+        <div className="flex flex-col justify-center px-5 sm:px-12 lg:px-16 pt-24 pb-8 lg:py-16 gap-0">
           
           {/* Boot badge */}
-          <div className="flex items-center gap-3 mb-2">
-            <span className="w-[6px] h-[6px] rounded-full bg-cyan-400 animate-pulse" />
-            <span className="font-mono text-[12px] tracking-[0.2em] text-cyan-400 border border-cyan-400/20 rounded-[3px] px-3 py-[4px]">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <span className="w-[4px] h-[4px] sm:w-[6px] sm:h-[6px] rounded-full bg-cyan-400 animate-pulse" />
+            <span className="font-mono text-[10px] sm:text-[12px] tracking-[0.2em] text-cyan-400 border border-cyan-400/20 rounded-[3px] px-2 sm:px-3 py-[3px] sm:py-[4px]">
               SYSTEMS ONLINE
             </span>
           </div>
 
           {/* Headline / Identity */}
-          <div className="mb-4 flex flex-col gap-0">
-            <h1 className="font-sans text-4xl sm:text-5xl lg:text-[48px] font-bold tracking-tight text-slate-50 leading-none whitespace-nowrap -mb-1">
+          <div className="mb-4 flex flex-col gap-0 w-full">
+            <h1 className="font-sans text-[22px] min-[375px]:text-[26px] sm:text-[36px] lg:text-[48px] font-bold tracking-tight text-slate-50 leading-none whitespace-nowrap -mb-1">
               SHASHIKANTH PANUGANTI<span className="text-cyan-400">.</span>
             </h1>
-            <p className="font-sans text-4xl sm:text-5xl lg:text-[48px] text-slate-300 font-light tracking-tight leading-[1.05]">
+            <p className="font-sans text-[22px] min-[375px]:text-[26px] sm:text-[36px] lg:text-[48px] text-slate-300 font-light tracking-tight leading-[1.05] whitespace-nowrap">
               Building systems that hold<br />
               under <span className="text-cyan-400 font-semibold">real conditions</span>.
             </p>
           </div>
 
           {/* Rotating capability */}
-          <div className="h-[36px] overflow-hidden mb-10">
+          <div className="h-[32px] overflow-hidden mb-8 lg:mb-10 w-full max-w-[100vw]">
             <div
               className="flex flex-col transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateY(-${capIndex * 36}px)` }}
+              style={{ transform: `translateY(-${capIndex * 32}px)` }}
             >
               {[...CAPABILITIES, CAPABILITIES[0]].map((cap, i) => (
                 <div
                   key={i}
-                  className="h-[36px] flex items-center gap-3 font-mono text-[16px] sm:text-[18px] text-slate-400"
+                  className="h-[32px] flex items-center gap-2 sm:gap-3 font-mono text-[12px] min-[375px]:text-[14px] sm:text-[16px] lg:text-[18px] text-slate-400 whitespace-nowrap"
                 >
-                  <span className="text-emerald-400 text-[16px]">→</span>
+                  <span className="text-emerald-400 text-[12px] sm:text-[16px]">→</span>
                   {cap}
                 </div>
               ))}
@@ -386,7 +386,7 @@ export const Hero = () => {
           </div>
 
           {/* KPI row */}
-          <div className="grid grid-cols-3 gap-2 mb-10">
+          <div className="grid grid-cols-3 gap-2 mb-8 lg:mb-10">
             {[
               { val: '3',           label: 'Systems built'  },
               { val: '99.9%',       label: 'Uptime target'  },
@@ -394,12 +394,12 @@ export const Hero = () => {
             ].map(({ val, label }) => (
               <div
                 key={label}
-                className="border border-white/[0.06] rounded-[4px] bg-white/[0.02] px-3 py-[10px]"
+                className="border border-white/[0.06] rounded-[4px] bg-white/[0.02] px-2 sm:px-3 py-[8px] sm:py-[10px]"
               >
-                <div className="font-mono text-[18px] font-bold text-slate-50 leading-none">
+                <div className="font-mono text-[14px] sm:text-[18px] font-bold text-slate-50 leading-none">
                   {val}
                 </div>
-                <div className="font-mono text-[9px] tracking-[0.1em] text-slate-500 mt-1 uppercase">
+                <div className="font-mono text-[7px] sm:text-[9px] tracking-[0.05em] sm:tracking-[0.1em] text-slate-500 mt-1 uppercase truncate">
                   {label}
                 </div>
               </div>
@@ -410,21 +410,21 @@ export const Hero = () => {
           <div className="flex flex-col gap-2">
             <a
               href="#moonveil"
-              className="group flex items-center justify-between px-4 py-[11px] rounded-[4px] bg-cyan-400/[0.08] border border-cyan-400/25 text-cyan-400 font-mono text-[12px] tracking-[0.06em] uppercase hover:bg-cyan-400/[0.14] hover:border-cyan-400/50 transition-all duration-150"
+              className="group flex items-center justify-between px-3 sm:px-4 py-[9px] sm:py-[11px] rounded-[4px] bg-cyan-400/[0.08] border border-cyan-400/25 text-cyan-400 font-mono text-[10px] sm:text-[12px] tracking-[0.06em] uppercase hover:bg-cyan-400/[0.14] hover:border-cyan-400/50 transition-all duration-150"
             >
               <span>Launch architecture tour</span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </a>
             <a
               href="#architecture"
-              className="flex items-center justify-between px-4 py-[11px] rounded-[4px] bg-transparent border border-white/[0.06] text-slate-500 font-mono text-[12px] tracking-[0.06em] uppercase hover:bg-white/[0.04] hover:border-white/[0.12] hover:text-slate-400 transition-all duration-150"
+              className="flex items-center justify-between px-3 sm:px-4 py-[9px] sm:py-[11px] rounded-[4px] bg-transparent border border-white/[0.06] text-slate-500 font-mono text-[10px] sm:text-[12px] tracking-[0.06em] uppercase hover:bg-white/[0.04] hover:border-white/[0.12] hover:text-slate-400 transition-all duration-150"
             >
               <span>View engineering decisions</span>
               <ExternalLink size={12} className="opacity-60" />
             </a>
             <a
               href="/resume.pdf"
-              className="flex items-center justify-between px-4 py-[11px] rounded-[4px] bg-transparent border border-white/[0.06] text-slate-500 font-mono text-[12px] tracking-[0.06em] uppercase hover:bg-white/[0.04] hover:border-white/[0.12] hover:text-slate-400 transition-all duration-150"
+              className="flex items-center justify-between px-3 sm:px-4 py-[9px] sm:py-[11px] rounded-[4px] bg-transparent border border-white/[0.06] text-slate-500 font-mono text-[10px] sm:text-[12px] tracking-[0.06em] uppercase hover:bg-white/[0.04] hover:border-white/[0.12] hover:text-slate-400 transition-all duration-150"
             >
               <span>Download resume</span>
               <Download size={12} className="opacity-60" />
@@ -433,15 +433,16 @@ export const Hero = () => {
         </div>
 
         {/* ── Right: Live telemetry panels ─────────────────────────────────── */}
-        <div className="flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-12 gap-3 lg:py-16">
+        <div className="flex flex-col justify-center px-4 sm:px-8 lg:px-12 pb-24 lg:py-16 gap-3 lg:gap-4">
+          
           {/* System health */}
           <div className="border border-white/[0.06] rounded-[6px] bg-white/[0.02] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-[10px] border-b border-white/[0.05]">
-              <span className="font-mono text-[9px] tracking-[0.14em] text-slate-600 uppercase">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-[8px] sm:py-[10px] border-b border-white/[0.05]">
+              <span className="font-mono text-[8px] sm:text-[9px] tracking-[0.14em] text-slate-600 uppercase">
                 System health
               </span>
-              <span className="flex items-center gap-[5px] font-mono text-[9px] text-emerald-400">
-                <span className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-pulse" />
+              <span className="flex items-center gap-[4px] sm:gap-[5px] font-mono text-[8px] sm:text-[9px] text-emerald-400">
+                <span className="w-[4px] sm:w-[5px] h-[4px] sm:h-[5px] rounded-full bg-emerald-400 animate-pulse" />
                 All systems operational
               </span>
             </div>
@@ -449,13 +450,13 @@ export const Hero = () => {
               {rows.map((row) => (
                 <div
                   key={row.id}
-                  className="flex items-center justify-between px-4 py-[7px] hover:bg-white/[0.02] transition-colors gap-3"
+                  className="flex items-center justify-between px-3 sm:px-4 py-[6px] sm:py-[7px] hover:bg-white/[0.02] transition-colors gap-2 sm:gap-3"
                 >
-                  <span className="flex items-center gap-[7px] font-mono text-[11px] text-slate-500">
+                  <span className="flex items-center gap-[5px] sm:gap-[7px] font-mono text-[9px] sm:text-[11px] text-slate-500">
                     <StatusDot health={row.health} />
                     {row.label}
                   </span>
-                  <div className="flex items-center gap-[10px]">
+                  <div className="flex items-center gap-[6px] sm:gap-[10px]">
                     <LoadBar value={row.load} health={row.health} />
                     <StatusLabel text={row.status} health={row.health} />
                   </div>
@@ -466,21 +467,21 @@ export const Hero = () => {
 
           {/* Activity feed */}
           <div className="border border-white/[0.06] rounded-[6px] bg-white/[0.02] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-[10px] border-b border-white/[0.05]">
-              <span className="font-mono text-[9px] tracking-[0.14em] text-slate-600 uppercase">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-[8px] sm:py-[10px] border-b border-white/[0.05]">
+              <span className="font-mono text-[8px] sm:text-[9px] tracking-[0.14em] text-slate-600 uppercase">
                 Network activity
               </span>
-              <span className="font-mono text-[9px] text-slate-600">
+              <span className="font-mono text-[8px] sm:text-[9px] text-slate-600">
                 {pktRate} pkt/s
               </span>
             </div>
-            <div className="px-4 py-2 flex flex-col gap-[5px] min-h-[120px]">
+            <div className="px-3 sm:px-4 py-2 flex flex-col gap-[4px] sm:gap-[5px] min-h-[100px] sm:min-h-[120px]">
               {activity.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center gap-2 font-mono text-[10px] text-slate-600 animate-[fadeSlideIn_0.3s_ease_forwards]"
+                  className="flex items-center gap-1 sm:gap-2 font-mono text-[8px] sm:text-[10px] text-slate-600 animate-[fadeSlideIn_0.3s_ease_forwards]"
                 >
-                  <span className="text-slate-800 min-w-[44px] text-[9px]">{entry.time}</span>
+                  <span className="text-slate-800 min-w-[36px] sm:min-w-[44px] text-[7px] sm:text-[9px]">{entry.time}</span>
                   <TypeBadge type={entry.type} />
                   <span className="text-slate-500 flex-1 min-w-0 truncate">
                     {entry.from}
@@ -495,21 +496,21 @@ export const Hero = () => {
 
           {/* Sparkline */}
           <div className="border border-white/[0.06] rounded-[6px] bg-white/[0.02] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-[10px] border-b border-white/[0.05]">
-              <span className="font-mono text-[9px] tracking-[0.14em] text-slate-600 uppercase">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-[8px] sm:py-[10px] border-b border-white/[0.05]">
+              <span className="font-mono text-[8px] sm:text-[9px] tracking-[0.14em] text-slate-600 uppercase">
                 Packet throughput
               </span>
-              <span className="font-mono text-[9px] text-slate-600">30s window</span>
+              <span className="font-mono text-[8px] sm:text-[9px] text-slate-600">30s window</span>
             </div>
-            <div className="px-4 pt-2 pb-1 h-[44px]">
+            <div className="px-3 sm:px-4 pt-2 pb-1 h-[36px] sm:h-[44px]">
               <Sparkline data={sparkData} />
             </div>
             {/* Uptime strip */}
-            <div className="flex gap-[2px] px-4 pb-3 pt-1">
+            <div className="flex gap-[1px] sm:gap-[2px] px-3 sm:px-4 pb-2 sm:pb-3 pt-1">
               {Array.from({ length: 30 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 h-[6px] rounded-[1px] ${
+                  className={`flex-1 h-[4px] sm:h-[6px] rounded-[1px] ${
                     i === 11 || i === 12 ? 'bg-red-500/40' : 'bg-emerald-400/70'
                   }`}
                 />
@@ -519,8 +520,8 @@ export const Hero = () => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+      {/* Scroll indicator - Hidden on mobile as it conflicts with content flow */}
+      <div className="hidden lg:block absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
         <div className="w-[22px] h-[38px] border border-slate-700 rounded-full flex justify-center">
           <div className="w-[3px] h-[6px] bg-cyan-400 rounded-full mt-[6px] animate-bounce" />
         </div>

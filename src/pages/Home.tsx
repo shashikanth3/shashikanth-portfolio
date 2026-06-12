@@ -1,4 +1,5 @@
 import React, { useEffect, Suspense, lazy } from 'react';
+
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import HeroSkeleton from '../components/hero/HeroSkeleton';
@@ -13,9 +14,9 @@ const Hero = lazy(() =>
   }))
 );
 
-const InteractiveArchitectureMap = lazy(() =>
-  import('../components/architecture/InteractiveArchitectureMap').then((module) => ({
-    default: (module as any).default || (module as any).InteractiveArchitectureMap,
+const EnterpriseShowcase = lazy(() =>
+  import('../components/projects/EnterpriseShowcase').then((module) => ({
+    default: (module as any).default || (module as any).EnterpriseShowcase,
   }))
 );
 
@@ -113,17 +114,12 @@ export const Home: React.FC = () => {
           </Suspense>
         </section>
 
-        {/* Architecture Map */}
-        <section id="architecture" className="py-24 px-6 bg-[#0f1520]">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-cyan-400 text-sm font-mono mb-2 tracking-widest">SYSTEMS ARCHITECTURE</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 reveal">Interactive Architecture Map</h2>
-            <p className="text-gray-400 mb-8 reveal">Explore Freight Desk's data flow — drag nodes, hover for details.</p>
-            <Suspense fallback={<GraphSkeleton height={500} />}>
-              {mode === 'immersive' ? <InteractiveArchitectureMap /> : <GraphSkeleton height={500} />}
-            </Suspense>
-          </div>
-        </section>
+        {/* Enterprise Architecture Showcase */}
+        <div id="architecture">
+          <Suspense fallback={<div className="h-96 bg-[#0f1520] border border-[#1e2d45] rounded-xl animate-pulse m-6" />}>
+            <EnterpriseShowcase />
+          </Suspense>
+        </div>
 
         {/* Failure Simulation */}
         <section id="failures" className="py-24 px-6 bg-[#0f1520]">
