@@ -8,13 +8,6 @@
  * - EventEngine: autonomous storytelling — fault injection, rebalancing, sync waves, integrity repair
  * - CinematicCamera: orbital auto-tour with node inspection focus shifts
  * - AdaptiveQuality: monitors FPS and degrades/upgrades particle density dynamically
- *
- * Storytelling events (recruiter wow moments):
- * 1. Data packet travels Moonveil → State Sync → validated
- * 2. Connection failure + auto-recovery
- * 3. Node overload + load-balance redistribution
- * 4. Orphan record appears → integrity engine repairs it
- * 5. Offline node goes dark → reconnects → sync wave propagates
  */
 
 import { useEffect, useRef, useCallback } from 'react';
@@ -99,8 +92,8 @@ const NODE_DEFS: NodeDef[] = [
   },
   {
     id: 'lyrics',
-    label: 'Lyrics Vault',
-    sublabel: 'Media Index · SQLite · Sync',
+    label: 'MyLyricsApp Node',
+    sublabel: 'MP3 Shortcuts · SQLite · Sync',
     position: [0.4, -1.4, -0.8],
     radius: 0.20,
     color: 0x00e5a0,
@@ -223,8 +216,6 @@ function easeInOut(t: number): number {
 const HeroScene = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // We keep ALL mutable scene state in a single ref-of-objects
-  // so React never re-renders while the loop runs.
   const stateRef = useRef<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
@@ -234,26 +225,27 @@ const HeroScene = () => {
     nodes: Map<string, LiveNode>;
     connections: LiveConnection[];
     packets: DataPacket[];
-    // Camera tour
     camTargetPos: THREE.Vector3;
     camTargetLook: THREE.Vector3;
     camT: number;
     camStageTimer: number;
     camStage: number;
-    // Event engine
     eventTimer: number;
     eventIndex: number;
-    // FPS adaptation
     fpsHistory: number[];
-    lastQuality: number;      // particle count multiplier
-    // Ambient particles (background field)
+    lastQuality: number;      
     ambientParticles: THREE.Points;
     isMobile: boolean;
+    isContextLost: boolean;
   } | null>(null);
 
   const buildScene = useCallback(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
+    
+    // Clear any existing canvas in case of a context restore rebuild
+    container.innerHTML = '';
+    
     const isMobile = window.innerWidth < 768;
 
     // ── Renderer ──────────────────────────────────────────────────────────
@@ -267,10 +259,25 @@ const HeroScene = () => {
     renderer.sortObjects = true;
     container.appendChild(renderer.domElement);
 
+    // ── WebGL Context Loss Guards ─────────────────────────────────────────
+    renderer.domElement.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      console.warn("WebGL Context Lost: Pausing simulation logic to prevent memory faults.");
+      if (stateRef.current) {
+        stateRef.current.isContextLost = true;
+        cancelAnimationFrame(stateRef.current.raf);
+      }
+    }, false);
+
+    renderer.domElement.addEventListener('webglcontextrestored', () => {
+      console.log("WebGL Context Restored: Rebuilding structural node graph.");
+      buildScene();
+      startLoop();
+    }, false);
+
     // ── Scene & Camera ────────────────────────────────────────────────────
     const scene = new THREE.Scene();
     scene.background = null;
-    // Very faint depth fog
     scene.fog = new THREE.FogExp2(0x000814, 0.06);
 
     const camera = new THREE.PerspectiveCamera(
@@ -283,16 +290,13 @@ const HeroScene = () => {
     camera.lookAt(0, 0, 0);
 
     // ── Lighting ──────────────────────────────────────────────────────────
-    // Deep space ambient — barely visible, nodes provide own illumination
     const ambient = new THREE.AmbientLight(0x050a1a, 1.0);
     scene.add(ambient);
 
-    // Rim light from above-left (cool blue)
     const rimLight = new THREE.DirectionalLight(0x4488ff, 0.4);
     rimLight.position.set(-4, 6, 2);
     scene.add(rimLight);
 
-    // Warm accent from below-right (golden)
     const accentLight = new THREE.PointLight(0xffaa33, 0.6, 20);
     accentLight.position.set(3, -3, 1);
     scene.add(accentLight);
@@ -306,7 +310,6 @@ const HeroScene = () => {
 
       const col = hexToThreeColor(def.color);
 
-      // Glass core
       const coreGeo = new THREE.IcosahedronGeometry(def.radius * 0.55, isMobile ? 1 : 2);
       const coreMat = new THREE.MeshPhysicalMaterial({
         color: col,
@@ -321,7 +324,6 @@ const HeroScene = () => {
       });
       const coreMesh = new THREE.Mesh(coreGeo, coreMat);
 
-      // Outer glass shell
       const shellGeo = new THREE.SphereGeometry(def.radius, isMobile ? 12 : 24, isMobile ? 8 : 16);
       const shellMat = new THREE.MeshPhysicalMaterial({
         color: col,
@@ -337,7 +339,6 @@ const HeroScene = () => {
       });
       const shellMesh = new THREE.Mesh(shellGeo, shellMat);
 
-      // Status ring (thin torus orbiting equator)
       const ringGeo = new THREE.TorusGeometry(def.radius * 1.35, 0.008, 4, isMobile ? 24 : 48);
       const statusRingMaterial = new THREE.MeshBasicMaterial({
         color: col,
@@ -347,7 +348,6 @@ const HeroScene = () => {
       const ringMesh = new THREE.Mesh(ringGeo, statusRingMaterial);
       ringMesh.rotation.x = Math.PI / 2;
 
-      // Soft glow plane (additive billboard — simulated with a large transparent sphere)
       const glowGeo = new THREE.SphereGeometry(def.radius * 2.2, 8, 6);
       const glowMat = new THREE.MeshBasicMaterial({
         color: col,
@@ -391,7 +391,6 @@ const HeroScene = () => {
       const fromPos = new THREE.Vector3(...fromNode.def.position);
       const toPos = new THREE.Vector3(...toNode.def.position);
 
-      // Slight arc (mid-point offset)
       const midpoint = lerp3(fromPos, toPos, 0.5);
       midpoint.y += (Math.random() - 0.5) * 0.5;
       midpoint.z += (Math.random() - 0.5) * 0.3;
@@ -401,7 +400,6 @@ const HeroScene = () => {
 
       for (let i = 0; i <= SEGMENTS; i++) {
         const t = i / SEGMENTS;
-        // Quadratic bezier
         const p = new THREE.Vector3()
           .copy(fromPos)
           .multiplyScalar((1 - t) * (1 - t))
@@ -447,7 +445,7 @@ const HeroScene = () => {
       });
     }
 
-    // ── Ambient particles (background star field — meaningful) ─────────────
+    // ── Ambient particles ──────────────────────────────────────────────────
     const particleCount = isMobile ? 300 : 700;
     const pGeo = new THREE.BufferGeometry();
     const pPos = new Float32Array(particleCount * 3);
@@ -462,7 +460,6 @@ const HeroScene = () => {
     ];
 
     for (let i = 0; i < particleCount; i++) {
-      // Spread in a flattened sphere — depth of field feel
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
       const r = 4 + Math.random() * 6;
@@ -493,19 +490,12 @@ const HeroScene = () => {
     scene.add(ambientParticles);
 
     // ── Camera tour stages ─────────────────────────────────────────────────
-    // Each stage: {eye, look, duration}
     const CAMERA_STAGES = [
-      // Wide establishing shot — "this is a distributed system"
       { eye: [0, 1.2, 7.5], look: [0, 0, 0], duration: 8 },
-      // Inspect Moonveil (game server)
       { eye: [3.8, 1.5, 2.0], look: [2.5, 0.3, -1.0], duration: 7 },
-      // Inspect State Sync hub (infra core)
       { eye: [-0.3, 1.0, 2.0], look: [-0.3, -0.2, -2.4], duration: 6 },
-      // Orbit left — Freight + Offline
       { eye: [-4.5, 0.8, 3.0], look: [-1.5, 0.5, 0], duration: 7 },
-      // Top-down systems view
       { eye: [0.5, 6.0, 3.0], look: [0, 0, -1], duration: 6 },
-      // Return wide
       { eye: [1.0, 0.8, 7.0], look: [0, 0, 0], duration: 8 },
     ];
 
@@ -523,15 +513,15 @@ const HeroScene = () => {
       camT: 0,
       camStageTimer: 0,
       camStage: 0,
-      eventTimer: 3,   // first event fires at t=3s
+      eventTimer: 3, 
       eventIndex: 0,
       fpsHistory: [],
       lastQuality: 1,
       ambientParticles,
       isMobile,
+      isContextLost: false,
     };
 
-    // Store camera stage list on state for access in loop
     (stateRef.current as any).cameraStages = CAMERA_STAGES;
   }, []);
 
@@ -549,7 +539,6 @@ const HeroScene = () => {
       const toNode = nodes.get(toId);
       if (!fromNode || !toNode) return;
 
-      // Packet colors by type
       const typeColor: Record<DataPacket['type'], number> = {
         sync: 0x00d4ff,
         heartbeat: 0x00ff88,
@@ -570,7 +559,6 @@ const HeroScene = () => {
       const mesh = new THREE.Mesh(geo, mat);
       scene.add(mesh);
 
-      // Build short trail (3 spheres behind the head)
       const isMobile = stateRef.current.isMobile;
       const trailCount = isMobile ? 2 : 4;
       const trail: THREE.Mesh[] = [];
@@ -603,7 +591,6 @@ const HeroScene = () => {
     []
   );
 
-  // ── Sample bezier point (must mirror how connections were built) ──────────
   const sampleConnection = useCallback(
     (conn: LiveConnection, t: number): THREE.Vector3 => {
       const { nodes } = stateRef.current!;
@@ -612,12 +599,10 @@ const HeroScene = () => {
       const fromPos = new THREE.Vector3(...from.def.position);
       const toPos = new THREE.Vector3(...to.def.position);
       const mid = lerp3(fromPos, toPos, 0.5);
-      // Re-derive midpoint perturbation deterministically per connection ID
       const seed = conn.def.from.charCodeAt(0) + conn.def.to.charCodeAt(0);
       mid.y += ((seed % 7) - 3.5) * 0.07;
       mid.z += ((seed % 5) - 2.5) * 0.06;
 
-      // Quadratic bezier
       const p = new THREE.Vector3()
         .copy(fromPos)
         .multiplyScalar((1 - t) * (1 - t))
@@ -646,7 +631,7 @@ const HeroScene = () => {
       );
       if (conn) {
         conn.health = 'failed';
-        conn.healthTimer = 3.5; // seconds until recovery starts
+        conn.healthTimer = 3.5; 
         conn.material.uniforms.uHealth.value = 0.0;
       }
     },
@@ -657,17 +642,15 @@ const HeroScene = () => {
       if (node) {
         node.loadLevel = 0.95;
         node.status = 'overloaded';
-        // Spawn recovery packets to self-heal
         const conn = s.connections.find(
           (c) => c.def.from === 'moonveil' && c.def.to === 'selfheal'
         );
         if (conn) {
           spawnPacket('moonveil', 'selfheal', 'recovery');
         }
-        // Auto-normalize after 4s (handled in loop)
       }
     },
-    // 4. Orphan integrity repair
+    // 4. Orphan integrity repair (MyLyricsApp: Validating dynamic MP3 folder shortcuts against the inbuilt player cache)
     (s: typeof stateRef.current) => {
       if (!s) return;
       const conn = s.connections.find(
@@ -686,13 +669,11 @@ const HeroScene = () => {
       const node = s.nodes.get('offline');
       if (node) {
         node.status = 'offline';
-        // Re-online after 3.5s
         setTimeout(() => {
           if (!stateRef.current) return;
           const n = stateRef.current.nodes.get('offline');
           if (n) {
             n.status = 'syncing';
-            // Spray heartbeat packets
             const targets = ['statesync', 'freight'];
             for (const tId of targets) {
               const c = stateRef.current.connections.find(
@@ -716,7 +697,6 @@ const HeroScene = () => {
   const startLoop = useCallback(() => {
     if (!stateRef.current) return;
 
-    // Heartbeat packets spawned on a timer (background traffic)
     let heartbeatTimer = 0;
     let prevTime = performance.now();
     let frameCount = 0;
@@ -724,15 +704,14 @@ const HeroScene = () => {
     let fpsTimer = 0;
 
     const loop = () => {
-      if (!stateRef.current) return;
+      if (!stateRef.current || stateRef.current.isContextLost) return;
       const s = stateRef.current;
       s.raf = requestAnimationFrame(loop);
 
       const now = performance.now();
-      const rawDt = Math.min((now - prevTime) / 1000, 0.05); // cap at 50ms
+      const rawDt = Math.min((now - prevTime) / 1000, 0.05);
       prevTime = now;
 
-      // Skip if tab hidden
       if (document.hidden) return;
 
       s.elapsedTime += rawDt;
@@ -778,12 +757,10 @@ const HeroScene = () => {
       const desiredEye = lerp3(currentEye, targetEye, stageProgress * 0.3);
       const desiredLook = lerp3(currentLook, targetLook, stageProgress * 0.3);
 
-      // Smooth follow
       s.camera.position.lerp(desiredEye, 0.015);
       s.camTargetLook.lerp(desiredLook, 0.015);
       s.camera.lookAt(s.camTargetLook);
 
-      // Gentle orbital drift (layered on top of tour)
       const orbitDrift = 0.06;
       s.camera.position.x += Math.sin(t * 0.07) * orbitDrift * rawDt;
       s.camera.position.y += Math.cos(t * 0.05) * orbitDrift * 0.4 * rawDt;
@@ -794,7 +771,6 @@ const HeroScene = () => {
         const eventFn = EVENTS[s.eventIndex % EVENTS.length];
         eventFn(s);
         s.eventIndex++;
-        // Events fire every 5–9 seconds
         s.eventTimer = 5 + Math.random() * 4;
       }
 
@@ -803,18 +779,14 @@ const HeroScene = () => {
         const { coreMesh, shellMesh, ringMesh, glowMesh, statusRingMaterial, def } = node;
         node.pulsePhase += rawDt * (0.8 + node.loadLevel);
 
-        // Breathing scale
         const breathe = 1 + Math.sin(node.pulsePhase) * 0.05 * (1 + node.loadLevel);
         coreMesh.scale.setScalar(breathe);
 
-        // Shell slow counter-rotation
         shellMesh.rotation.y += rawDt * 0.12;
         shellMesh.rotation.z += rawDt * 0.07;
 
-        // Status ring orbit
         ringMesh.rotation.z += rawDt * (0.5 + node.loadLevel * 1.5);
 
-        // Status-driven color
         let ringColor: THREE.Color;
         let coreEmissive: number;
         switch (node.status) {
@@ -837,13 +809,11 @@ const HeroScene = () => {
         statusRingMaterial.color.copy(ringColor);
         (coreMesh.material as THREE.MeshPhysicalMaterial).emissiveIntensity = coreEmissive;
 
-        // Auto-heal overloaded node after 5s
         if (node.status === 'overloaded') {
           node.loadLevel = Math.max(0.15, node.loadLevel - rawDt * 0.08);
           if (node.loadLevel < 0.4) node.status = 'online';
         }
 
-        // Glow pulse
         (glowMesh.material as THREE.MeshBasicMaterial).opacity =
           0.03 + Math.abs(Math.sin(node.pulsePhase * 0.7)) * 0.05 * (1 + node.loadLevel);
       }
@@ -854,7 +824,6 @@ const HeroScene = () => {
         conn.material.uniforms.uPulse.value = conn.pulseT;
         conn.material.uniforms.uTime.value = t;
 
-        // Health state machine
         if (conn.health === 'failed') {
           conn.healthTimer -= rawDt;
           if (conn.healthTimer <= 0) {
@@ -868,7 +837,6 @@ const HeroScene = () => {
           if (conn.healthTimer <= 0) {
             conn.health = 'healthy';
             conn.material.uniforms.uHealth.value = 1.0;
-            // Spawn sync packet to confirm restored connection
             spawnPacket(conn.def.from, conn.def.to, 'sync');
           }
         }
@@ -910,7 +878,6 @@ const HeroScene = () => {
         const pos = sampleConnection(conn, packet.t);
         packet.mesh.position.copy(pos);
 
-        // Trail
         for (let i = 0; i < packet.trail.length; i++) {
           const trailT = Math.max(0, packet.t - (i + 1) * 0.04);
           const tp = sampleConnection(conn, trailT);
@@ -918,7 +885,6 @@ const HeroScene = () => {
         }
       }
 
-      // Clean up dead packets
       for (const p of deadPackets) {
         s.scene.remove(p.mesh);
         p.mesh.geometry.dispose();
@@ -960,12 +926,11 @@ const HeroScene = () => {
     window.addEventListener('resize', handleResize);
     handleResize();
 
-    // Pause on hidden tab
     const handleVisibility = () => {
       if (!stateRef.current) return;
       if (document.hidden) {
         cancelAnimationFrame(stateRef.current.raf);
-      } else {
+      } else if (!stateRef.current.isContextLost) {
         startLoop();
       }
     };
@@ -977,7 +942,6 @@ const HeroScene = () => {
       if (!stateRef.current) return;
       cancelAnimationFrame(stateRef.current.raf);
 
-      // Full dispose
       const { scene, renderer } = stateRef.current;
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh || obj instanceof THREE.Points || obj instanceof THREE.Line) {

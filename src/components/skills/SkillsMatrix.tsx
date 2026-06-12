@@ -3,6 +3,55 @@ import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { Network, Database, Cpu, Workflow, Terminal } from 'lucide-react';
 
+// ─── Theme Mapping (Tailwind Fix) ───────────────────────────────────────────
+// Tailwind needs fully formed class strings at build time to parse them properly.
+const THEME_MAP: Record<string, {
+  cardHoverBorder: string;
+  bgGradient: string;
+  textAccent: string;
+  iconBg: string;
+  iconBorder: string;
+  pillHoverBorder: string;
+  pillHoverBg: string;
+}> = {
+  cyan: {
+    cardHoverBorder: 'hover:border-cyan-500/30',
+    bgGradient: 'from-cyan-500/10',
+    textAccent: 'text-cyan-400/80',
+    iconBg: 'bg-cyan-500/10',
+    iconBorder: 'border-cyan-500/20',
+    pillHoverBorder: 'group-hover:border-cyan-500/30',
+    pillHoverBg: 'group-hover:bg-cyan-500/10',
+  },
+  indigo: {
+    cardHoverBorder: 'hover:border-indigo-500/30',
+    bgGradient: 'from-indigo-500/10',
+    textAccent: 'text-indigo-400/80',
+    iconBg: 'bg-indigo-500/10',
+    iconBorder: 'border-indigo-500/20',
+    pillHoverBorder: 'group-hover:border-indigo-500/30',
+    pillHoverBg: 'group-hover:bg-indigo-500/10',
+  },
+  teal: {
+    cardHoverBorder: 'hover:border-teal-500/30',
+    bgGradient: 'from-teal-500/10',
+    textAccent: 'text-teal-400/80',
+    iconBg: 'bg-teal-500/10',
+    iconBorder: 'border-teal-500/20',
+    pillHoverBorder: 'group-hover:border-teal-500/30',
+    pillHoverBg: 'group-hover:bg-teal-500/10',
+  },
+  amber: {
+    cardHoverBorder: 'hover:border-amber-500/30',
+    bgGradient: 'from-amber-500/10',
+    textAccent: 'text-amber-400/80',
+    iconBg: 'bg-amber-500/10',
+    iconBorder: 'border-amber-500/20',
+    pillHoverBorder: 'group-hover:border-amber-500/30',
+    pillHoverBg: 'group-hover:bg-amber-500/10',
+  }
+};
+
 // ─── Data Layer ─────────────────────────────────────────────────────────────
 
 const SKILL_CATEGORIES = [
@@ -48,7 +97,6 @@ const TOOLS = ['Git', 'GitHub', 'Android Studio', 'VS Code', 'REST APIs', 'Postm
 
 // ─── Animation Variants ─────────────────────────────────────────────────────
 
-// Added the 'Variants' type here to fix the strict TypeScript errors
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -71,8 +119,6 @@ const itemVariants: Variants = {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 const SkillsMatrix: React.FC = () => {
-  // Removed the unused hoveredZone state since Tailwind CSS handles it via group-hover
-
   return (
     <div className="w-full max-w-6xl mx-auto">
       
@@ -104,54 +150,59 @@ const SkillsMatrix: React.FC = () => {
         viewport={{ once: true, margin: "-100px" }}
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
-        {SKILL_CATEGORIES.map((category) => (
-          <motion.div
-            key={category.id}
-            variants={itemVariants}
-            className={`
-              relative group overflow-hidden bg-slate-900/40 border border-slate-800 
-              rounded-xl p-6 sm:p-8 backdrop-blur-sm transition-all duration-500
-              hover:bg-slate-800/40 hover:border-${category.color}-500/30 hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]
-              ${category.colSpan}
-            `}
-          >
-            {/* Background Glow on Hover */}
-            <div 
-              className={`absolute -inset-px bg-gradient-to-br from-${category.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl`}
-            />
+        {SKILL_CATEGORIES.map((category) => {
+          // Resolve theme styles safely
+          const theme = THEME_MAP[category.color] || THEME_MAP.cyan;
 
-            <div className="relative z-10 flex flex-col h-full">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-8">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-100 mb-1">{category.title}</h3>
-                  <p className={`text-xs font-mono tracking-wider text-${category.color}-400/80 uppercase`}>
-                    {category.subtitle}
-                  </p>
+          return (
+            <motion.div
+              key={category.id}
+              variants={itemVariants}
+              className={`
+                relative group overflow-hidden bg-slate-900/40 border border-slate-800 
+                rounded-xl p-6 sm:p-8 backdrop-blur-sm transition-all duration-500
+                hover:bg-slate-800/40 ${theme.cardHoverBorder} hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]
+                ${category.colSpan}
+              `}
+            >
+              {/* Background Glow on Hover */}
+              <div 
+                className={`absolute -inset-px bg-gradient-to-br ${theme.bgGradient} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl`}
+              />
+
+              <div className="relative z-10 flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-8">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-100 mb-1">{category.title}</h3>
+                    <p className={`text-xs font-mono tracking-wider ${theme.textAccent} uppercase`}>
+                      {category.subtitle}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${theme.iconBg} border ${theme.iconBorder}`}>
+                    {category.icon}
+                  </div>
                 </div>
-                <div className={`p-3 rounded-lg bg-${category.color}-500/10 border border-${category.color}-500/20`}>
-                  {category.icon}
+
+                {/* Skills Pills */}
+                <div className="flex flex-wrap gap-2 mt-auto">
+                  {category.skills.map((skill) => (
+                    <span 
+                      key={skill}
+                      className={`
+                        px-3 py-1.5 text-[11px] font-mono rounded-md border border-slate-700/50 
+                        bg-slate-800/50 text-slate-300 transition-all duration-300 group-hover:text-slate-100
+                        ${theme.pillHoverBorder} ${theme.pillHoverBg}
+                      `}
+                    >
+                      {skill}
+                    </span>
+                  ))}
                 </div>
               </div>
-
-              {/* Skills Pills */}
-              <div className="flex flex-wrap gap-2 mt-auto">
-                {category.skills.map((skill) => (
-                  <span 
-                    key={skill}
-                    className={`
-                      px-3 py-1.5 text-[11px] font-mono rounded-md border border-slate-700/50 
-                      bg-slate-800/50 text-slate-300 transition-all duration-300
-                      group-hover:border-${category.color}-500/30 group-hover:bg-${category.color}-500/10 group-hover:text-slate-100
-                    `}
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </motion.div>
 
       {/* Bottom Tools Footer */}

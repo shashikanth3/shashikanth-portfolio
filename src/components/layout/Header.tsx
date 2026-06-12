@@ -12,7 +12,7 @@
  * - Framer Motion: header entrance, glass transition, active pill slide
  *
  * Sections wired to chapters (add these IDs to your page sections):
- * #philosophy  #moonveil  #architecture  #reliability  #contact
+ * #philosophy  #moonveil  #architecture  #sk-apps  #reliability  #contact
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -25,8 +25,9 @@ const CHAPTERS = [
   { num: '01', label: 'Philosophy',   href: '#philosophy',   sublabel: 'Foundation'    },
   { num: '02', label: 'Moonveil',     href: '#moonveil',     sublabel: 'LAN · WS'      },
   { num: '03', label: 'Architecture', href: '#architecture', sublabel: 'Systems'       },
-  { num: '04', label: 'Reliability',  href: '#reliability',  sublabel: 'Metrics'       },
-  { num: '05', label: 'Contact',      href: '#contact',      sublabel: 'Open'          },
+  { num: '04', label: 'SK Apps',      href: '#sk-apps',      sublabel: 'Mobile Apps'   }, // <-- Added SK Apps here
+  { num: '05', label: 'Reliability',  href: '#reliability',  sublabel: 'Metrics'       },
+  { num: '06', label: 'Contact',      href: '#contact',      sublabel: 'Open'          },
 ] as const;
 
 const SPECIALTIES = [
@@ -43,7 +44,8 @@ const INDICATORS = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ChapterId = 0 | 1 | 2 | 3 | 4;
+// Added '5' to support the new 6th chapter
+type ChapterId = 0 | 1 | 2 | 3 | 4 | 5; 
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 

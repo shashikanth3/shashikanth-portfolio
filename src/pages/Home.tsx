@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
@@ -6,68 +6,28 @@ import HeroSkeleton from '../components/hero/HeroSkeleton';
 import GraphSkeleton from '../components/architecture/GraphSkeleton';
 import ChapterProgress from '../components/ui/ChapterProgress';
 import { useVisualizationMode } from '../hooks/useVisualizationMode';
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
+import { safeLazy } from '../utils/safeLazy';
 
-// ── Safe lazy loaders (handles both default and named exports) ─────────────
-const Hero = lazy(() =>
-  import('../components/hero/Hero').then((module) => ({
-    default: (module as any).default || (module as any).Hero,
-  }))
-);
-
-const EnterpriseShowcase = lazy(() =>
-  import('../components/projects/EnterpriseShowcase').then((module) => ({
-    default: (module as any).default || (module as any).EnterpriseShowcase,
-  }))
-);
-
-const SystemsMap = lazy(() =>
-  import('../components/architecture/SystemsMap').then((module) => ({
-    default: (module as any).default || (module as any).SystemsMap,
-  }))
-);
-
-const MoonveilImmersive = lazy(() =>
-  import('../components/projects/MoonveilImmersive').then((module) => ({
-    default: (module as any).default || (module as any).MoonveilImmersive,
-  }))
-);
-
-const FailureSimulator = lazy(() =>
-  import('../components/architecture/FailureSimulator').then((module) => ({
-    default: (module as any).default || (module as any).FailureSimulator,
-  }))
-);
-
-const ReliabilityDashboard = lazy(() =>
-  import('../components/architecture/ReliabilityDashboard').then((module) => ({
-    default: (module as any).default || (module as any).ReliabilityDashboard,
-  }))
-);
-
-const SkillsMatrix = lazy(() =>
-  import('../components/skills/SkillsMatrix').then((module) => ({
-    default: (module as any).default || (module as any).SkillsMatrix,
-  }))
-);
-
+// ── Safe lazy loaders ───────────────────────────────────────────────────────
+const Hero = safeLazy(() => import('../components/hero/Hero'));
+const EnterpriseShowcase = safeLazy(() => import('../components/projects/EnterpriseShowcase'));
+const SystemsMap = safeLazy(() => import('../components/architecture/SystemsMap'));
+const MoonveilImmersive = safeLazy(() => import('../components/projects/MoonveilImmersive'));
+// THE FIX: Changed the import to your new SKAppsShowcase component
+const SKAppsShowcase = safeLazy(() => import('../components/projects/SKAppsShowcase'));
+const ReliabilityDashboard = safeLazy(() => import('../components/architecture/ReliabilityDashboard'));
+const SkillsMatrix = safeLazy(() => import('../components/skills/SkillsMatrix'));
 // ────────────────────────────────────────────────────────────────────────────
 
 export const Home: React.FC = () => {
   const { mode } = useVisualizationMode();
 
-  // Reveal animation observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    );
-    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+  // Unified reveal animation observer via custom hook
+  useIntersectionObserver('.reveal', { 
+    threshold: 0.1, 
+    rootMargin: '0px 0px -40px 0px' 
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0e17]">
@@ -121,13 +81,12 @@ export const Home: React.FC = () => {
           </Suspense>
         </div>
 
-        {/* Failure Simulation */}
-        <section id="failures" className="py-24 px-6 bg-[#0f1520]">
+        {/* SK Apps Showcase */}
+        <section id="sk-apps" className="py-24 px-6 bg-[#0f1520]">
           <div className="container mx-auto max-w-6xl">
-            <div className="text-cyan-400 text-sm font-mono mb-2 tracking-widest">FAILURE SIMULATION</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 reveal">Watch the system heal itself.</h2>
+            {/* THE FIX: Headings removed, using the new component */}
             <Suspense fallback={<div className="h-48 bg-[#0f1520] border border-[#1e2d45] rounded-xl animate-pulse" />}>
-              <FailureSimulator />
+              <SKAppsShowcase />
             </Suspense>
           </div>
         </section>

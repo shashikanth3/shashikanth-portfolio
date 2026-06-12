@@ -11,7 +11,7 @@ const CHAPTERS: Chapter[] = [
   { id: 'philosophy',   label: 'Philosophy',    index: 0 },
   { id: 'moonveil',     label: 'Moonveil',       index: 1 },
   { id: 'projects',     label: 'Architecture',   index: 2 },
-  { id: 'failures',     label: 'Failures',       index: 3 },
+  { id: 'sk-apps',      label: 'SK Apps',        index: 3 }, // <-- Updated here!
   { id: 'reliability',  label: 'Dashboard',      index: 4 },
   { id: 'systems-map',  label: 'Systems',        index: 5 },
   { id: 'skills',       label: 'Stack',          index: 6 },
