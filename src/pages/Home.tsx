@@ -114,7 +114,7 @@ export const Home: React.FC = () => {
         </section>
 
         {/* Architecture Map */}
-        <section id="projects" className="py-24 px-6 bg-[#0f1520]">
+        <section id="architecture" className="py-24 px-6 bg-[#0f1520]">
           <div className="container mx-auto max-w-6xl">
             <div className="text-cyan-400 text-sm font-mono mb-2 tracking-widest">SYSTEMS ARCHITECTURE</div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 reveal">Interactive Architecture Map</h2>
