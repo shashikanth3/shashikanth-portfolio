@@ -1,6 +1,7 @@
 /**
  * Footer.tsx — Systems Engineering Status Bar
- * * Matches the Header.tsx aesthetic:
+ *
+ * Matches the Header.tsx aesthetic:
  * - Monospace technical readouts
  * - Animated pulse indicators
  * - Ultra-fine borders and tracking

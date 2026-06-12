@@ -2,21 +2,21 @@
  * Header.tsx — Systems Engineering Command Bar
  *
  * Behaviors:
- *  - At top: transparent, minimal — name abbreviated, status indicators visible
- *  - Scrolled: glass panel with frosted bg, name expands, progress bar appears
- *  - Active chapter tracking via IntersectionObserver on named sections
- *  - Progress bar reflects scroll depth within current chapter
- *  - Mobile: compact identity + current chapter + drawer (no hamburger)
- *  - Logo hover: specialty tags fan out
- *  - Status indicators: animated pulses, tooltip on hover
- *  - Framer Motion: header entrance, glass transition, active pill slide
+ * - At top: transparent, minimal — name abbreviated, status indicators visible
+ * - Scrolled: glass panel with frosted bg, name expands, progress bar appears
+ * - Active chapter tracking via IntersectionObserver on named sections
+ * - Progress bar reflects scroll depth within current chapter
+ * - Mobile: compact identity + current chapter + drawer (no hamburger)
+ * - Logo hover: specialty tags fan out
+ * - Status indicators: animated pulses, tooltip on hover
+ * - Framer Motion: header entrance, glass transition, active pill slide
  *
  * Sections wired to chapters (add these IDs to your page sections):
- *  #philosophy  #moonveil  #architecture  #reliability  #contact
+ * #philosophy  #moonveil  #architecture  #reliability  #contact
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence,} from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Mail } from 'lucide-react';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -301,12 +301,12 @@ export const Header: React.FC = () => {
         </div>
 
         {/* ── Mobile layout ──────────────────────────────────────────────── */}
-        <div className="relative flex md:hidden items-center h-[48px] px-4 justify-between">
+        <div className="relative flex md:hidden items-center h-[52px] px-4 justify-between">
           {/* Identity */}
           <div className="flex items-center gap-2">
             <PulseDot color="green" period={2.2} size={5} />
-            <span className="font-sans font-bold text-[12px] text-slate-50 tracking-tight">
-              SP<span className="text-cyan-400">.</span>
+            <span className="font-sans font-bold text-[13px] text-slate-50 tracking-tight">
+              SK<span className="text-cyan-400">.</span>
             </span>
             <div className="w-[1px] h-[14px] bg-white/[0.06]" />
             <span className="font-mono text-[9px] text-cyan-400 tracking-[0.05em]">
@@ -316,35 +316,38 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Right: progress + menu toggle */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Mini progress strip */}
-            <div className="w-[40px] h-[2px] bg-white/[0.05] rounded-full overflow-hidden">
+            <div className="w-[32px] sm:w-[40px] h-[2px] bg-white/[0.05] rounded-full overflow-hidden">
               <div
                 className="h-full bg-cyan-400/70 rounded-full transition-all duration-200"
                 style={{ width: `${scrollProgress * 100}%` }}
               />
             </div>
-            {/* Menu button */}
+            
+            {/* Massive, reliable touch target for mobile menu */}
             <button
-              className="flex flex-col gap-[4px] p-1 cursor-pointer"
+              className="relative z-50 flex flex-col justify-center items-center w-[40px] h-[40px] -mr-2 cursor-pointer touch-manipulation focus:outline-none"
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Toggle navigation"
             >
-              <motion.span
-                className="block h-[1px] bg-slate-500 rounded"
-                animate={{ width: mobileOpen ? 14 : 14, rotate: mobileOpen ? 45 : 0, y: mobileOpen ? 5 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
-              <motion.span
-                className="block h-[1px] bg-slate-500 rounded"
-                animate={{ width: mobileOpen ? 14 : 10, opacity: mobileOpen ? 0 : 1 }}
-                transition={{ duration: 0.15 }}
-              />
-              <motion.span
-                className="block h-[1px] bg-slate-500 rounded"
-                animate={{ width: 14, rotate: mobileOpen ? -45 : 0, y: mobileOpen ? -5 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
+              <div className="flex flex-col gap-[5px] w-[18px]">
+                <motion.span
+                  className="block h-[2px] w-full bg-slate-300 rounded-full origin-center"
+                  animate={{ rotate: mobileOpen ? 45 : 0, y: mobileOpen ? 7 : 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+                <motion.span
+                  className="block h-[2px] w-full bg-slate-300 rounded-full"
+                  animate={{ opacity: mobileOpen ? 0 : 1 }}
+                  transition={{ duration: 0.15 }}
+                />
+                <motion.span
+                  className="block h-[2px] w-full bg-slate-300 rounded-full origin-center"
+                  animate={{ rotate: mobileOpen ? -45 : 0, y: mobileOpen ? -7 : 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </div>
             </button>
           </div>
         </div>
@@ -353,13 +356,13 @@ export const Header: React.FC = () => {
         <AnimatePresence>
           {mobileOpen && (
             <motion.nav
-              className="relative md:hidden bg-[#030e1e] border-t border-white/[0.05] overflow-hidden"
+              className="relative md:hidden bg-[#030e1e] border-t border-white/[0.05] overflow-hidden shadow-2xl"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="px-4 py-2 flex flex-col gap-[2px]">
+              <div className="px-4 py-3 flex flex-col gap-1">
                 {CHAPTERS.map((ch, i) => {
                   const isActive = activeChapter === i;
                   return (
@@ -367,36 +370,37 @@ export const Header: React.FC = () => {
                       key={ch.label}
                       href={ch.href}
                       onClick={(e) => handleNav(e, ch.href)}
-                      className={`flex items-center gap-3 px-3 py-[10px] rounded-[3px] no-underline transition-colors duration-150 ${isActive ? 'bg-cyan-400/[0.06]' : 'hover:bg-white/[0.02]'}`}
-                      initial={{ opacity: 0, x: -6 }}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-md no-underline transition-colors duration-150 ${isActive ? 'bg-cyan-400/[0.06] border border-cyan-400/10' : 'hover:bg-white/[0.02] border border-transparent'}`}
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
+                      transition={{ delay: i * 0.05 }}
                     >
-                      <span className="font-mono text-[8px] text-slate-700 w-4 flex-shrink-0">{ch.num}</span>
-                      <span className={`font-mono text-[11px] tracking-[0.04em] ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
+                      <span className="font-mono text-[9px] text-slate-600 w-4 flex-shrink-0">{ch.num}</span>
+                      <span className={`font-mono text-[12px] tracking-[0.04em] ${isActive ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>
                         {ch.label}
                       </span>
-                      <span className={`ml-auto font-mono text-[8px] tracking-[0.06em] ${isActive ? 'text-cyan-400/40' : 'text-slate-800'}`}>
+                      <span className={`ml-auto font-mono text-[9px] tracking-[0.06em] ${isActive ? 'text-cyan-400/50' : 'text-slate-700'}`}>
                         {isActive ? 'CURRENT' : ch.sublabel}
                       </span>
                     </motion.a>
                   );
                 })}
                 {/* Mobile status row */}
-                <div className="flex items-center gap-2 pt-2 pb-1 px-3 border-t border-white/[0.04] mt-1">
-                  {INDICATORS.map((ind) => (
-                    <div key={ind.id} className="flex items-center gap-[5px]">
-                      <PulseDot color={ind.pulse as 'cyan' | 'green'} period={ind.period} size={4} />
-                      <span className="font-mono text-[7px] tracking-[0.08em] text-slate-700">{ind.label}</span>
-                      <span className={`font-mono text-[7px] tracking-[0.08em] font-bold ${ind.pulse === 'cyan' ? 'text-cyan-400' : 'text-emerald-400'}`}>{ind.value}</span>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between pt-4 pb-2 px-3 border-t border-white/[0.04] mt-2">
+                  <div className="flex gap-4">
+                    {INDICATORS.map((ind) => (
+                      <div key={ind.id} className="flex items-center gap-[6px]">
+                        <PulseDot color={ind.pulse as 'cyan' | 'green'} period={ind.period} size={5} />
+                        <span className="font-mono text-[8px] tracking-[0.08em] text-slate-600">{ind.label}</span>
+                      </div>
+                    ))}
+                  </div>
                   <a
                     href="mailto:panugantishashikanth132@gmail.com"
-                    className="ml-auto flex items-center gap-1 text-slate-600 hover:text-cyan-400 transition-colors"
+                    className="flex items-center gap-1.5 text-slate-500 hover:text-cyan-400 transition-colors"
                   >
-                    <Mail size={11} />
-                    <span className="font-mono text-[7px] tracking-[0.08em]">EMAIL</span>
+                    <Mail size={13} />
+                    <span className="font-mono text-[8px] tracking-[0.08em]">EMAIL</span>
                   </a>
                 </div>
               </div>

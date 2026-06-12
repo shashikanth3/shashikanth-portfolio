@@ -1,371 +1,262 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Info, Network, Database } from 'lucide-react';
-
-gsap.registerPlugin(ScrollTrigger);
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Network, Smartphone, Server, Database, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
-
-const STEPS = [
+const PHASES = [
   {
-    id: 'udp-discovery',
-    phase: '01',
-    title: 'UDP DISCOVERY',
-    subtitle: 'Broadcasting to local network — finding peers',
-    description:
-      'Host broadcasts its presence on the local network. Clients discover the host instantly without needing a centralized cloud server.',
-    tooltip:
-      'UDP broadcasts are lightweight, connectionless messages sent to all devices on the local subnet. It allows "Zero-Configuration" joining.',
-    accentClass: 'text-cyan-400',
-    borderClass: 'border-cyan-500/30',
-    bgClass: 'bg-cyan-500/10',
-    dotClass: 'bg-cyan-400',
-    glowColor: 'rgba(34,211,238,0.45)',
+    id: 'udp',
+    title: 'UDP Discovery',
+    subtitle: 'Zero-Config Local Networking',
+    desc: 'The Host device broadcasts its IP address via UDP to the local subnet. Clients instantly detect the lobby without needing a centralized matchmaking server.',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10',
+    border: 'border-cyan-500/30'
   },
   {
-    id: 'tcp-handshake',
-    phase: '02',
-    title: 'TCP HANDSHAKE',
-    subtitle: 'Persistent session established',
-    description:
-      'A reliable connection is established between the host and each client via the SYN → SYN-ACK → ACK handshake protocol.',
-    tooltip:
-      'TCP guarantees reliable, ordered delivery of packets. Once discovered via UDP, the actual game data must use TCP so no actions are dropped.',
-    accentClass: 'text-teal-400',
-    borderClass: 'border-teal-500/30',
-    bgClass: 'bg-teal-500/10',
-    dotClass: 'bg-teal-400',
-    glowColor: 'rgba(20,184,166,0.45)',
+    id: 'tcp',
+    title: 'TCP Handshake',
+    subtitle: 'Persistent Session Layer',
+    desc: 'Once discovered, clients upgrade to a reliable TCP/WebSocket connection. Heartbeat pings maintain the session, preventing disconnects if someone walks out of WiFi range.',
+    color: 'text-teal-400',
+    bg: 'bg-teal-500/10',
+    border: 'border-teal-500/30'
   },
   {
-    id: 'action-resolver',
-    phase: '03',
-    title: 'ACTION RESOLVER',
-    subtitle: 'Race conditions mathematically eliminated',
-    description:
-      'A deterministic state machine queues all incoming client actions and processes them in a strict hierarchy, ensuring every client reaches the exact same state.',
-    tooltip:
-      'If two players act at the exact same millisecond, the Resolver queues them and applies game-logic priority, preventing server confusion.',
-    accentClass: 'text-amber-400',
-    borderClass: 'border-amber-500/30',
-    bgClass: 'bg-amber-500/10',
-    dotClass: 'bg-amber-400',
-    glowColor: 'rgba(245,166,35,0.45)',
+    id: 'resolver',
+    title: 'Action Resolver',
+    subtitle: 'Deterministic State Machine',
+    desc: 'To prevent race conditions (e.g., a Wolf kills at the exact millisecond a Bodyguard protects), the Host queues all packets and processes them via a strict logical hierarchy, ignoring physical network arrival times.',
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/30'
   },
   {
-    id: 'asymmetric-sync',
-    phase: '04',
-    title: 'ASYMMETRIC SYNC',
-    subtitle: 'Zero packet-sniffing vulnerability',
-    description:
-      'The server holds global truth, but sends each client only the specific data they are authorized to see based on their in-game role.',
-    tooltip:
-      'If we broadcast the whole game state, a hacker could inspect packets to see hidden roles. Asymmetric sync eliminates this vector.',
-    accentClass: 'text-indigo-400',
-    borderClass: 'border-indigo-500/30',
-    bgClass: 'bg-indigo-500/10',
-    dotClass: 'bg-indigo-400',
-    glowColor: 'rgba(129,140,248,0.45)',
-  },
+    id: 'sync',
+    title: 'Asymmetric Sync',
+    subtitle: 'Anti-Packet Sniffing',
+    desc: 'The Host acts as the ultimate source of truth. It strips all hidden roles from the game state before broadcasting, ensuring tech-savvy players cannot intercept packets to cheat.',
+    color: 'text-indigo-400',
+    bg: 'bg-indigo-500/10',
+    border: 'border-indigo-500/30'
+  }
 ];
 
-// ─── Visuals (pure DOM, no React state changes during scroll) ─────────────────
-
-const VisualUDP = () => (
-  <div className="relative flex items-center justify-center w-48 h-48">
-    <div className="absolute w-20 h-20 border border-cyan-500/40 rounded-full animate-ping" />
-    <div
-      className="absolute w-36 h-36 border border-cyan-500/20 rounded-full animate-ping"
-      style={{ animationDelay: '0.5s' }}
-    />
-    <div className="relative z-10 w-16 h-16 bg-cyan-950 border-2 border-cyan-400 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.5)]">
-      <Network size={28} className="text-cyan-400" />
-    </div>
-  </div>
-);
-
-const VisualTCP = () => (
-  <div className="flex items-center gap-10">
-    <div className="w-16 h-16 bg-teal-950 border-2 border-teal-400 rounded-full flex items-center justify-center">
-      <span className="text-[10px] font-bold text-teal-300">HOST</span>
-    </div>
-    <div className="w-32 h-1 bg-slate-800 relative overflow-hidden rounded-full">
-      <div className="absolute inset-0 bg-teal-400 rounded-full animate-[tcpSlide_1.8s_ease-in-out_infinite]" />
-    </div>
-    <div className="w-16 h-16 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center">
-      <span className="text-[10px] font-bold text-slate-300">CLIENT</span>
-    </div>
-    <style>{`@keyframes tcpSlide { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }`}</style>
-  </div>
-);
-
-const VisualResolver = () => (
-  <div className="relative w-48 h-48 flex items-center justify-center">
-    <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
-    <div className="absolute inset-0 border-t-4 border-amber-400 rounded-full animate-spin" />
-    <div className="text-center">
-      <Database size={32} className="text-amber-400 mx-auto" />
-      <div className="text-[10px] text-amber-400 mt-2 font-mono tracking-widest">QUEUE</div>
-    </div>
-  </div>
-);
-
-const VisualAsymmetric = () => (
-  <div className="flex gap-6 items-center">
-    {[
-      { label: 'Payload A', visible: true },
-      { label: 'Masked', visible: false },
-      { label: 'Payload C', visible: true },
-    ].map(({ label, visible }) => (
-      <div
-        key={label}
-        className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-opacity ${
-          visible
-            ? 'border-indigo-500/50 bg-indigo-500/10'
-            : 'border-slate-700 bg-slate-800 opacity-40'
-        }`}
-      >
-        <span className={`text-[10px] font-mono ${visible ? 'text-indigo-300' : 'text-slate-400'}`}>
-          {label}
-        </span>
-        <div className={`w-12 h-2 rounded ${visible ? 'bg-indigo-400' : 'bg-slate-600'}`} />
-      </div>
-    ))}
-  </div>
-);
-
-const VISUALS = [VisualUDP, VisualTCP, VisualResolver, VisualAsymmetric];
-
-// ─── Component ────────────────────────────────────────────────────────────────
-
-const MoonveilImmersive: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLDivElement>(null); // Added ref for the floating nav
-  const sectionsRef = useRef<HTMLDivElement[]>([]);
-  const indicatorDotsRef = useRef<HTMLButtonElement[]>([]);
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  const chapterTextRef = useRef<HTMLSpanElement>(null);
-  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  // GSAP ScrollTrigger — zero React state changes during scroll
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const ctx = gsap.context(() => {
-      // 1. Master trigger to hide/show the navigation ONLY when Moonveil is on screen
-      ScrollTrigger.create({
-        trigger: containerRef.current,
-        start: 'top 75%', // Show nav when section is 25% into viewport
-        end: 'bottom 25%', // Hide nav when section is almost out
-        onToggle: (self) => {
-          if (navRef.current) {
-            gsap.to(navRef.current, {
-              opacity: self.isActive ? 1 : 0,
-              y: self.isActive ? 0 : 20,
-              pointerEvents: self.isActive ? 'auto' : 'none',
-              duration: 0.4,
-              ease: 'power2.out',
-            });
-          }
-        },
-      });
-
-      sectionsRef.current.forEach((section, i) => {
-        if (!section) return;
-
-        // Pin each panel for its scroll distance
-        ScrollTrigger.create({
-          trigger: section,
-          start: 'top top',
-          end: '+=100%',
-          pin: true,
-          pinSpacing: true,
-          anticipatePin: 1,
-          onEnter: () => {
-            setActiveIndex(i);
-            updateNav(i);
-          },
-          onEnterBack: () => {
-            setActiveIndex(i);
-            updateNav(i);
-          },
-        });
-
-        // Fade-in timeline for each section
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 80%',
-            end: 'top 20%',
-            scrub: 0.6,
-          },
-        });
-
-        tl.fromTo(
-          section.querySelector('.step-content'),
-          { opacity: 0, y: 40 },
-          { opacity: 1, y: 0, ease: 'power2.out' }
-        );
-      });
-
-      // Scroll progress bar (DOM mutation, no React state)
-      ScrollTrigger.create({
-        trigger: containerRef.current,
-        start: 'top top',
-        end: 'bottom bottom',
-        onUpdate: (self) => {
-          if (progressBarRef.current) {
-            progressBarRef.current.style.width = `${self.progress * 100}%`;
-          }
-        },
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
-
-  function updateNav(idx: number) {
-    indicatorDotsRef.current.forEach((dot, i) => {
-      if (!dot) return;
-      dot.classList.toggle('w-8', i === idx);
-      dot.classList.toggle('bg-cyan-400', i === idx);
-      dot.classList.toggle('w-2', i !== idx);
-      dot.classList.toggle('bg-slate-600', i !== idx);
-    });
-    if (chapterTextRef.current) {
-      chapterTextRef.current.textContent = STEPS[idx].title;
-    }
-  }
-
-  const scrollToStep = (idx: number) => {
-    sectionsRef.current[idx]?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleTooltip = (text: string, e: React.MouseEvent) => {
-    const x = Math.min(e.clientX + 12, window.innerWidth - 320);
-    const y = e.clientY - 48;
-    setTooltip({ text, x, y });
-    setTimeout(() => setTooltip(null), 4500);
-  };
+export const MoonveilImmersive: React.FC = () => {
+  const [activePhase, setActivePhase] = useState(0);
 
   return (
-    <div ref={containerRef} className="relative bg-[#0a0e17]">
-      {/* Background grid */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.025]">
-        <div className="w-full h-full bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:40px_40px]" />
-      </div>
+    <div className="py-16 sm:py-24 px-4 sm:px-6 bg-[#05080f] min-h-screen flex items-center">
+      <div className="max-w-6xl mx-auto w-full">
+        
+        {/* Header */}
+        <div className="mb-8 sm:mb-12 text-center lg:text-left">
+          <div className="text-cyan-400 text-xs sm:text-sm font-mono mb-2 tracking-widest uppercase">Decentralized Multiplayer</div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">Moonveil Network Engine</h2>
+          <p className="text-slate-400 mt-3 sm:mt-4 max-w-2xl mx-auto lg:mx-0 text-sm sm:text-base">
+            Interactive topology demonstrating zero-latency, authoritative offline multiplayer.
+          </p>
+        </div>
 
-      {/* Sections — each pinned via ScrollTrigger */}
-      {STEPS.map((step, i) => {
-        const Visual = VISUALS[i];
-        return (
-          <div
-            key={step.id}
-            ref={(el) => { if (el) sectionsRef.current[i] = el; }}
-            className="relative min-h-screen w-full flex flex-col items-center justify-center px-6"
-          >
-            <div className="step-content max-w-3xl w-full text-center opacity-0">
-              {/* Phase badge */}
-              <div
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border mb-8 ${step.bgClass} ${step.borderClass}`}
-              >
-                <span className={`w-2 h-2 rounded-full ${step.dotClass} animate-pulse`} />
-                <span className={`text-xs font-bold tracking-widest ${step.accentClass}`}>
-                  PHASE {step.phase}
-                </span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12">
+          
+          {/* ── LEFT: INTERACTIVE TOPOLOGY VISUALIZER ── */}
+          <div className="lg:col-span-7 bg-[#0a0e17] border border-slate-800 rounded-2xl p-4 sm:p-8 relative h-[400px] lg:h-[500px] flex items-center justify-center overflow-hidden shadow-2xl">
+            
+            {/* Background Grid */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:20px_20px]" />
+
+            {/* Host Node (Center Top) */}
+            <div className="absolute top-10 sm:top-12 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
+              <div className="relative">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-900 border-2 border-cyan-400 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.2)] relative z-10">
+                  <Server className="text-cyan-400 w-6 h-6 sm:w-7 sm:h-7" />
+                </div>
+                
+                {/* UDP Broadcast Ripples - Hardware Accelerated */}
+                {activePhase === 0 && (
+                  <>
+                    <motion.div 
+                      style={{ willChange: 'transform, opacity' }}
+                      animate={{ scale: [1, 3.5], opacity: [0.8, 0] }} 
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} 
+                      className="absolute inset-0 border-2 border-cyan-400 rounded-xl pointer-events-none" 
+                    />
+                    <motion.div 
+                      style={{ willChange: 'transform, opacity' }}
+                      animate={{ scale: [1, 3.5], opacity: [0.8, 0] }} 
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.6 }} 
+                      className="absolute inset-0 border-2 border-cyan-400 rounded-xl pointer-events-none" 
+                    />
+                  </>
+                )}
+                
+                {/* Resolver Queue Indicator - Replaced with buttery smooth dashed circle */}
+                {activePhase === 2 && (
+                  <motion.div 
+                    style={{ willChange: 'transform' }}
+                    animate={{ rotate: 360 }} 
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }} 
+                    className="absolute -inset-3 sm:-inset-4 border-2 border-dashed border-amber-400 rounded-full pointer-events-none opacity-80" 
+                  />
+                )}
               </div>
-
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-3 text-white">
-                {step.title}
-              </h2>
-              <p className={`text-base md:text-lg font-medium mb-12 ${step.accentClass}`}>
-                {step.subtitle}
-              </p>
-
-              {/* Visual */}
-              <div className="h-52 flex items-center justify-center mb-12">
-                <Visual />
-              </div>
-
-              <p className="text-slate-400 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-6">
-                {step.description}
-              </p>
-
-              <button
-                onClick={(e) => handleTooltip(step.tooltip, e)}
-                className={`inline-flex items-center gap-2 text-sm text-slate-500 hover:${step.accentClass} transition-colors underline underline-offset-4 decoration-slate-700`}
-              >
-                <Info size={14} /> Engineering Context
-              </button>
+              <span className="mt-2 sm:mt-3 text-[10px] sm:text-xs font-mono text-cyan-400 bg-cyan-950/50 px-2 py-1 rounded backdrop-blur-sm">
+                HOST_SERVER
+              </span>
             </div>
-          </div>
-        );
-      })}
 
-      {/* ── Floating nav ──────────────────────────────────────────────────── */}
-      {/* Note: Added navRef, opacity-0, pointer-events-none, and translate-y-5 to hide by default */}
-      <div 
-        ref={navRef} 
-        className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 opacity-0 pointer-events-none translate-y-5"
-      >
-        <div className="flex items-center gap-5 bg-slate-900/85 backdrop-blur-md px-6 py-3.5 rounded-2xl border border-slate-700 shadow-2xl">
-          {/* Progress bar slot */}
-          <div className="hidden sm:flex items-center gap-2 pr-4 border-r border-slate-700">
-            <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">
-              {String(activeIndex + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}
-            </span>
+            {/* Client Nodes (Bottom Row) */}
+            <div className="absolute bottom-12 sm:bottom-16 w-full px-4 sm:px-12 flex justify-between z-20">
+              {[1, 2, 3].map((client) => (
+                <div key={client} className="flex flex-col items-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 border border-slate-600 rounded-lg flex items-center justify-center z-10 relative shadow-xl">
+                    <Smartphone className="text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
+                    
+                    {/* UDP Receiving Blip */}
+                    {activePhase === 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: [0, 1, 0] }} 
+                        transition={{ duration: 2, repeat: Infinity, delay: 1 }} 
+                        className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-cyan-400 rounded-full shadow-[0_0_10px_#22d3ee]" 
+                      />
+                    )}
+                    
+                    {/* Private State Shield */}
+                    {activePhase === 3 && (
+                      <motion.div 
+                        initial={{ scale: 0 }} 
+                        animate={{ scale: 1 }} 
+                        className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 bg-indigo-500 rounded-full p-1 shadow-lg"
+                      >
+                        <ShieldAlert className="text-white w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      </motion.div>
+                    )}
+                  </div>
+                  <span className="mt-2 sm:mt-3 text-[8px] sm:text-[10px] font-mono text-slate-500 bg-[#0a0e17]/80 px-1 rounded">
+                    CLIENT_0{client}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* SVG Connections (TCP & Sync Packets) */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+              {/* Clients are spaced roughly at 15%, 50%, 85% visually by flex-between, we map paths slightly inside */}
+              {[15, 50, 85].map((x, i) => (
+                <g key={i}>
+                  {/* Base TCP Line */}
+                  {(activePhase >= 1) && (
+                    <motion.line 
+                      x1="50%" y1="25%" x2={`${x}%`} y2="70%" 
+                      stroke="#14b8a6" strokeWidth="1.5" strokeDasharray="4 4"
+                      initial={{ pathLength: 0, opacity: 0 }} 
+                      animate={{ pathLength: 1, opacity: 0.25 }} 
+                      transition={{ duration: 0.5 }}
+                    />
+                  )}
+                  
+                  {/* Phase 2: Resolver Packets flying UP */}
+                  {activePhase === 2 && (
+                    <motion.circle r="3.5" fill="#fbbf24" style={{ willChange: 'transform' }}
+                      initial={{ cx: `${x}%`, cy: "70%" }}
+                      animate={{ cx: "50%", cy: "25%" }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }}
+                    />
+                  )}
+
+                  {/* Phase 3: Asymmetric Sync Packets flying DOWN */}
+                  {activePhase === 3 && (
+                    <motion.circle r="3.5" fill="#818cf8" style={{ willChange: 'transform' }}
+                      initial={{ cx: "50%", cy: "25%" }}
+                      animate={{ cx: `${x}%`, cy: "70%" }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
+                    />
+                  )}
+                </g>
+              ))}
+            </svg>
+
+            {/* Dynamic Center Badge */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activePhase}
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border bg-[#0a0e17]/90 backdrop-blur-md shadow-2xl flex items-center gap-1.5 sm:gap-2 ${PHASES[activePhase].border}`}
+                >
+                  {activePhase === 0 && <Network className="text-cyan-400 w-3 h-3 sm:w-4 sm:h-4" />}
+                  {activePhase === 1 && <CheckCircle2 className="text-teal-400 w-3 h-3 sm:w-4 sm:h-4" />}
+                  {activePhase === 2 && <Database className="text-amber-400 w-3 h-3 sm:w-4 sm:h-4" />}
+                  {activePhase === 3 && <ShieldAlert className="text-indigo-400 w-3 h-3 sm:w-4 sm:h-4" />}
+                  <span className={`text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase whitespace-nowrap ${PHASES[activePhase].color}`}>
+                    {PHASES[activePhase].title}
+                  </span>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
           </div>
 
-          {/* Dot indicators */}
-          <div className="flex gap-2 items-center">
-            {STEPS.map((_, idx) => (
-              <button
-                key={idx}
-                ref={(el) => { if (el) indicatorDotsRef.current[idx] = el; }}
-                onClick={() => scrollToStep(idx)}
-                aria-label={`Jump to phase ${idx + 1}`}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  idx === 0 ? 'w-8 bg-cyan-400' : 'w-2 bg-slate-600 hover:bg-slate-400'
-                }`}
-              />
-            ))}
+          {/* ── RIGHT: CONTROL PANEL ── */}
+          <div className="lg:col-span-5 flex flex-col justify-center gap-3 sm:gap-4">
+            {PHASES.map((phase, index) => {
+              const isActive = activePhase === index;
+              return (
+                <button
+                  key={phase.id}
+                  onClick={() => setActivePhase(index)}
+                  className={`text-left p-4 sm:p-5 lg:p-6 rounded-xl border transition-all duration-300 relative overflow-hidden group ${
+                    isActive ? `bg-slate-900 ${phase.border}` : 'bg-slate-900/30 border-slate-800 hover:bg-slate-800'
+                  }`}
+                >
+                  {/* Active highlight bar */}
+                  {isActive && (
+                    <motion.div layoutId="activePhaseBar" className={`absolute left-0 top-0 bottom-0 w-1 ${phase.bg.replace('/10', '')}`} />
+                  )}
+
+                  <div className="flex items-center justify-between mb-1 sm:mb-2">
+                    <h3 className={`text-base sm:text-lg font-bold font-sans tracking-tight transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                      0{index + 1}. {phase.title}
+                    </h3>
+                    <span className={`text-[9px] sm:text-[10px] font-mono px-2 py-0.5 sm:py-1 rounded border transition-colors ${
+                      isActive ? `${phase.color} ${phase.bg} ${phase.border}` : 'text-slate-600 border-slate-700'
+                    }`}>
+                      {isActive ? 'ACTIVE' : 'IDLE'}
+                    </span>
+                  </div>
+                  
+                  <h4 className={`text-[11px] sm:text-xs font-mono mb-1 sm:mb-2 tracking-wide transition-colors ${isActive ? phase.color : 'text-slate-500'}`}>
+                    {phase.subtitle}
+                  </h4>
+
+                  {/* Smooth height animation fix */}
+                  <AnimatePresence initial={false}>
+                    {isActive && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed pt-2">
+                          {phase.desc}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Chapter name */}
-          <div className="hidden sm:flex items-center gap-2 pl-4 border-l border-slate-700">
-            <span
-              ref={chapterTextRef}
-              className="text-[10px] text-slate-400 font-mono tracking-wider whitespace-nowrap"
-            >
-              {STEPS[0].title}
-            </span>
-          </div>
-        </div>
-
-        {/* Thin progress bar above nav pill */}
-        <div className="mt-2 h-0.5 w-full bg-slate-800 rounded-full overflow-hidden">
-          <div
-            ref={progressBarRef}
-            className="h-full bg-cyan-400 rounded-full transition-none"
-            style={{ width: '0%' }}
-          />
         </div>
       </div>
-
-      {/* Tooltip */}
-      {tooltip && (
-        <div
-          className="fixed z-[100] bg-slate-900 border border-slate-700 text-white text-sm p-4 rounded-xl shadow-2xl max-w-xs leading-relaxed pointer-events-none"
-          style={{ left: tooltip.x, top: tooltip.y }}
-        >
-          <div className="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-wider">
-            Architecture Note
-          </div>
-          {tooltip.text}
-        </div>
-      )}
     </div>
   );
 };
